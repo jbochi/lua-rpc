@@ -40,7 +40,14 @@ rpc.interface = function(args)
   return interface
 end
 
-rpc.serialize = function(type, arg)
+rpc.serialize = function(arg_type, arg)
+  if arg_type == "string" and type(arg) ~= "string" then
+    error("String expected")
+  elseif arg_type == "char" and (type(arg) ~= "string" or #arg ~= 1) then
+    error("Char expected")
+  elseif arg_type == "double" and (type(arg) ~= "number") then
+    error("Double expected")
+  end
   return arg .. "\n"
 end
 
