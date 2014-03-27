@@ -38,4 +38,8 @@ rpc.interface = function(args)
   return interface
 end
 
+rpc.serialize = function(type, arg)
+  return arg .. "\n"
+end
+
 return rpc

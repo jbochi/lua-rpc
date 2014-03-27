@@ -58,12 +58,18 @@ describe("interface", function()
       assert.same({"double", "string"}, i.foo.result_types())
     end)
 
-    it ("should support void", function()
+    it("should support void", function()
       local i = interface { methods = {
         foo = {}
       }}
       assert.same({}, i.foo.arg_types())
       assert.same({}, i.foo.result_types())
     end)
+  end)
+end)
+
+describe("serialization", function()
+  it("should serialize a string", function()
+    assert.same("oi\n", rpc.serialize("string", "oi"))
   end)
 end)
