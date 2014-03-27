@@ -70,23 +70,23 @@ end)
 
 describe("serialization", function()
   it("should serialize a string", function()
-    assert.same("oi\n", rpc.serialize("string", "oi"))
+    assert.same("oi", rpc.serialize("string", "oi"))
   end)
 
   it("should escape new lines", function()
-    assert.same("\\n\n", rpc.serialize("string", "\n"))
+    assert.same("\\n", rpc.serialize("string", "\n"))
   end)
 
   it("should escape slashes", function()
-    assert.same("\\\\n\n", rpc.serialize("string", "\\n"))
+    assert.same("\\\\n", rpc.serialize("string", "\\n"))
   end)
 
   it("should serialize a char", function()
-    assert.same("o\n", rpc.serialize("char", "o"))
+    assert.same("o", rpc.serialize("char", "o"))
   end)
 
   it("should support doubles", function()
-    assert.same("3.1415\n", rpc.serialize("double", 3.1415))
+    assert.same("3.1415", rpc.serialize("double", 3.1415))
   end)
 
   it("should validate arguments", function()

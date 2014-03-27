@@ -49,7 +49,7 @@ rpc.serialize = function(arg_type, arg)
   elseif arg_type == "double" and (type(arg) ~= "number") then
     error("Double expected")
   end
-  return string.gsub(string.gsub(arg, "\\", "\\\\"), "\n", "\\n") .. "\n"
+  return (string.gsub(string.gsub(arg, "\\", "\\\\"), "\n", "\\n"))
 end
 
 return rpc
