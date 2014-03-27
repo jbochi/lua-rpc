@@ -60,7 +60,7 @@ describe("interface", function()
 
     it("should support void", function()
       local i = interface { methods = {
-        foo = {}
+        foo = { resulttype = "void", args = {} }
       }}
       assert.same({}, i.foo.arg_types())
       assert.same({}, i.foo.result_types())

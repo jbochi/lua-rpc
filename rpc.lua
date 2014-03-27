@@ -14,7 +14,9 @@ local method = function(method_interface)
   end
   m.result_types = function()
     local types = list_types("out")
-    table.insert(types, 1, method_interface.resulttype)
+    if method_interface.resulttype and method_interface.resulttype ~= "void" then
+      table.insert(types, 1, method_interface.resulttype)
+    end
     return types
   end
   m.arg_types = function()
