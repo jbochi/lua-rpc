@@ -40,6 +40,7 @@ rpc.interface = function(args)
   return interface
 end
 
+-- serialization functions
 rpc.serialize = function(arg_type, arg)
   if arg_type == "string" and type(arg) ~= "string" then
     error("String expected")
@@ -48,7 +49,7 @@ rpc.serialize = function(arg_type, arg)
   elseif arg_type == "double" and (type(arg) ~= "number") then
     error("Double expected")
   end
-  return arg .. "\n"
+  return string.gsub(string.gsub(arg, "\\", "\\\\"), "\n", "\\n") .. "\n"
 end
 
 return rpc

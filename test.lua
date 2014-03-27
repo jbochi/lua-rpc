@@ -73,6 +73,14 @@ describe("serialization", function()
     assert.same("oi\n", rpc.serialize("string", "oi"))
   end)
 
+  it("should escape new lines", function()
+    assert.same("\\n\n", rpc.serialize("string", "\n"))
+  end)
+
+  it("should escape slashes", function()
+    assert.same("\\\\n\n", rpc.serialize("string", "\\n"))
+  end)
+
   it("should serialize a char", function()
     assert.same("o\n", rpc.serialize("char", "o"))
   end)
