@@ -34,5 +34,19 @@ describe("interface", function()
       }}
       assert.same({"double", "string"}, i.foo.result_types())
     end)
+
+    it("should know the argument types", function()
+      local i = interface { methods = {
+        foo = { resulttype = "double",
+                args = {{direction = "in",
+                          type = "double"},
+                        {direction = "in",
+                          type = "char"},
+                        {direction = "out",
+                          type = "string"}}}
+      }}
+      assert.same({"double", "char"}, i.foo.arg_types())
+    end)
+
   end)
 end)

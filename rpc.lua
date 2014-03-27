@@ -3,14 +3,22 @@ local rpc = {}
 -- create a method based on its interface definition
 local method = function(method_interface)
   local m = {}
-  m.result_types = function()
-    local results = {method_interface.resulttype}
+  m.list_types = function(direction)
+    local results = {}
     for _, arg in ipairs(method_interface.args or {}) do
-      if string.match(arg.direction, "out") then
+      if string.match(arg.direction, direction) then
         results[#results + 1] = arg.type
       end
     end
     return results
+  end
+  m.result_types = function()
+    local types = m.list_types("out")
+    table.insert(types, 1, method_interface.resulttype)
+    return types
+  end
+  m.arg_types = function()
+    return m.list_types("in")
   end
   return m
 end
