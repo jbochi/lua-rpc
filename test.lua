@@ -72,4 +72,8 @@ describe("serialization", function()
   it("should serialize a string", function()
     assert.same("oi\n", rpc.serialize("string", "oi"))
   end)
+
+  it("should serialize a char", function()
+    assert.same("o\n", rpc.serialize("char", "o"))
+  end)
 end)
