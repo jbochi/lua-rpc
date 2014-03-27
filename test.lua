@@ -3,16 +3,25 @@ local interface = rpc.interface
 
 
 describe("interface", function()
-  it("should have name", function()
+  it("should have a name", function()
     local i = interface { name = "myInterface" }
     assert.truthy(i)
-    assert.are.equal(i._name, "myInterface")
+    assert.are.equal(i.__name, "myInterface")
   end)
 
-  it("should create some methods", function()
-    local i = interface { methods = {
-      foo = { resulttype = "double"
-    }}}
-    assert.truthy(i.foo)
+  describe("a method", function()
+    it("should be created", function()
+      local i = interface { methods = {
+        foo = { resulttype = "double"
+      }}}
+      assert.truthy(i.foo)
+    end)
+
+    it("should know the result types", function()
+      local i = interface { methods = {
+        foo = { resulttype = "double"
+      }}}
+      assert.same(i.foo.result_types(), {"double"})
+    end)
   end)
 end)
