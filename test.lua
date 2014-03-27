@@ -48,5 +48,15 @@ describe("interface", function()
       assert.same({"double", "char"}, i.foo.arg_types())
     end)
 
+    it("should support in/out direction", function()
+      local i = interface { methods = {
+        foo = { resulttype = "double",
+                args = {{direction = "inout",
+                          type = "string"}}}
+      }}
+      assert.same({"string"}, i.foo.arg_types())
+      assert.same({"double", "string"}, i.foo.result_types())
+    end)
+
   end)
 end)
