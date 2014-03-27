@@ -76,4 +76,8 @@ describe("serialization", function()
   it("should serialize a char", function()
     assert.same("o\n", rpc.serialize("char", "o"))
   end)
+
+  it("should support doubles", function()
+    assert.same("3.1415\n", rpc.serialize("double", 3.1415))
+  end)
 end)
