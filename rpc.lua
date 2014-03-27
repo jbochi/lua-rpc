@@ -49,7 +49,23 @@ rpc.serialize = function(arg_type, arg)
   elseif arg_type == "double" and (type(arg) ~= "number") then
     error("Double expected")
   end
-  return (string.gsub(string.gsub(arg, "\\", "\\\\"), "\n", "\\n"))
+  return (string.gsub((string.gsub(arg, "\\", "\\\\")), "\n", "\\n"))
+end
+
+function quote(arg)
+  return string.format("%q", arg)
+end
+
+rpc.deserialize = function(arg_type, arg)
+  if arg_type == "double" then
+    return tonumber(arg)
+  else
+    return (string.gsub(
+              string.gsub(
+                string.gsub(arg, "^\\n", "\n"),
+              "([^\\])\\n", "%1\n"),
+            "\\\\", "\\"))
+  end
 end
 
 return rpc
