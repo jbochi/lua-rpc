@@ -76,7 +76,7 @@ rpc.serialize_list = function(arg_types, args)
       error("Wrong number of arguments")
     end
     local lines = {}
-    for i in ipairs(arg_types) do
+    for i, t in ipairs(arg_types) do
       lines[#lines + 1] = rpc.serialize(t, args[i])
     end
     lines[#lines + 1] = ""

@@ -109,6 +109,11 @@ describe("serialization", function()
       assert.has_error(function() rpc.serialize_list({"string"}, {"a", "b"}) end,
         "Wrong number of arguments")
     end)
+
+    it("should validate the argument types", function()
+      assert.has_error(function() rpc.serialize_list({"string"}, {7}) end,
+        "String expected")
+    end)
   end)
 end)
 
