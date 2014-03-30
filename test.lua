@@ -110,3 +110,15 @@ describe("deserialization", function()
     assert.same("\\n\\", rpc.deserialize("string", rpc.serialize("string", "\\n\\")))
   end)
 end)
+
+describe("communication", function()
+  it("a method should serialize its arguments", function()
+    local i = interface { methods = {
+      add = { resulttype = "double",
+              args = {{direction="in", type="double"},
+                      {direction="in", type="double"},
+              }}
+    }}
+    assert.same("add\n3\n4\n", i.add.serialize(3, 4))
+  end)
+end)

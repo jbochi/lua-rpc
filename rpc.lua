@@ -1,7 +1,7 @@
 local rpc = {}
 
 -- create a method based on its interface definition
-local method = function(method_interface)
+local method = function(name, method_interface)
   local m = {}
   local list_types = function(direction)
     local results = {}
@@ -22,6 +22,16 @@ local method = function(method_interface)
   m.arg_types = function()
     return list_types("in")
   end
+  m.serialize = function(...)
+    local args = {...}
+    local lines = {name}
+    local arg_types = m.arg_types()
+    for i in ipairs(arg_types) do
+      lines[#lines + 1] = rpc.serialize(t, args[i])
+    end
+    lines[#lines + 1] = ""
+    return table.concat(lines, "\n")
+  end
   return m
 end
 
@@ -29,7 +39,7 @@ end
 local interface_mt = {
   __index = function(o, method_name)
     local m = o.__methods[method_name]
-    if m then return method(m) end
+    if m then return method(method_name, m) end
   end
 }
 
