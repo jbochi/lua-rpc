@@ -97,6 +97,19 @@ describe("serialization", function()
     assert.has_error(function() rpc.serialize("double", "a") end, "Double expected")
     assert.has_error(function() rpc.serialize("double", nil) end, "Double expected")
   end)
+
+  describe("list serialization", function()
+    it("should serialize a list with new line separator", function()
+      assert.same("a\nb\nc\n", rpc.serialize_list({"string", "string", "string"}, {"a", "b", "c"}))
+    end)
+
+    it("should validate the number of arguments", function()
+      assert.has_error(function() rpc.serialize_list({"string"}, {}) end,
+        "Wrong number of arguments")
+      assert.has_error(function() rpc.serialize_list({"string"}, {"a", "b"}) end,
+        "Wrong number of arguments")
+    end)
+  end)
 end)
 
 describe("deserialization", function()
