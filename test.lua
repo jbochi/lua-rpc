@@ -127,6 +127,13 @@ describe("deserialization", function()
     assert.same("\n", rpc.deserialize("string", rpc.serialize("string", "\n")))
     assert.same("\\n\\", rpc.deserialize("string", rpc.serialize("string", "\\n\\")))
   end)
+
+  it("should deserialize lists", function()
+    assert.same({1, 2, 3}, rpc.deserialize_list({"double", "double", "double"},
+                            rpc.serialize_list({"double", "double", "double"}, {1, 2, 3})))
+    assert.same({"a", 4}, rpc.deserialize_list({"string", "double"},
+                            rpc.serialize_list({"string", "double"}, {"a", 4})))
+  end)
 end)
 
 describe("communication", function()
