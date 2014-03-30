@@ -25,15 +25,9 @@ local method = function(name, method_interface)
   m.serialize = function(...)
     local args = {...}
     local arg_types = m.arg_types()
-    if #args ~= #arg_types then
-      error("Wrong number of arguments")
-    end
-    local lines = {name}
-    for i in ipairs(arg_types) do
-      lines[#lines + 1] = rpc.serialize(t, args[i])
-    end
-    lines[#lines + 1] = ""
-    return table.concat(lines, "\n")
+    table.insert(args, 1, name)
+    table.insert(arg_types, 1, string)
+    return rpc.serialize_list(arg_types, args)
   end
   return m
 end
@@ -75,6 +69,18 @@ rpc.deserialize = function(arg_type, arg)
               "([^\\])\\n", "%1\n"),
             "\\\\", "\\"))
   end
+end
+
+rpc.serialize_list = function(arg_types, args)
+    if #args ~= #arg_types then
+      error("Wrong number of arguments")
+    end
+    local lines = {}
+    for i in ipairs(arg_types) do
+      lines[#lines + 1] = rpc.serialize(t, args[i])
+    end
+    lines[#lines + 1] = ""
+    return table.concat(lines, "\n")
 end
 
 return rpc
