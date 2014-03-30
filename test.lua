@@ -112,13 +112,24 @@ describe("deserialization", function()
 end)
 
 describe("communication", function()
-  it("a method should serialize its arguments", function()
-    local i = interface { methods = {
-      add = { resulttype = "double",
-              args = {{direction="in", type="double"},
-                      {direction="in", type="double"},
-              }}
-    }}
-    assert.same("add\n3\n4\n", i.add.serialize(3, 4))
+  describe("a simple method", function ()
+    before_each(function()
+      local i = interface { methods = {
+        add = { resulttype = "double",
+                args = {{direction="in", type="double"},
+                        {direction="in", type="double"},
+                }}
+      }}
+      add = i.add
+    end)
+
+    it("should serialize its arguments", function()
+      assert.same("add\n3\n4\n", add.serialize(3, 4))
+    end)
+
+    it("should validate the number of arguments", function()
+      assert.has_error(function() add.serialize(4) end, "Wrong number of arguments")
+      assert.has_error(function() add.serialize(4, 5, 6) end, "Wrong number of arguments")
+    end)
   end)
 end)

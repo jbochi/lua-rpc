@@ -24,8 +24,11 @@ local method = function(name, method_interface)
   end
   m.serialize = function(...)
     local args = {...}
-    local lines = {name}
     local arg_types = m.arg_types()
+    if #args ~= #arg_types then
+      error("Wrong number of arguments")
+    end
+    local lines = {name}
     for i in ipairs(arg_types) do
       lines[#lines + 1] = rpc.serialize(t, args[i])
     end
