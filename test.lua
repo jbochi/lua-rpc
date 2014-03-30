@@ -148,11 +148,11 @@ describe("communication", function()
       add = i.add
     end)
 
-    it("should serialize its arguments", function()
+    it("should serialize a call", function()
       assert.same("add\n3\n4\n", add.serialize_call(3, 4))
     end)
 
-    it("should validate the number of arguments", function()
+    it("should validate the number of arguments for a call", function()
       assert.has_error(function() add.serialize_call(4) end, "Wrong number of arguments")
       assert.has_error(function() add.serialize_call(4, 5, 6) end, "Wrong number of arguments")
     end)
