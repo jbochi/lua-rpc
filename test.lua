@@ -157,7 +157,7 @@ describe("communication", function()
       assert.has_error(function() add.serialize_call(4, 5, 6) end, "Wrong number of arguments")
     end)
 
-    it("should deserialize returned values", function()
+    it("should serialize returned values", function()
       assert.same("7\n", add.serialize_result(7))
     end)
   end)
