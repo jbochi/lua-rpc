@@ -22,12 +22,17 @@ local method = function(name, method_interface)
   m.arg_types = function()
     return list_types("in")
   end
-  m.serialize = function(...)
+  m.serialize_call = function(...)
     local args = {...}
     local arg_types = m.arg_types()
     table.insert(args, 1, name)
     table.insert(arg_types, 1, string)
     return rpc.serialize_list(arg_types, args)
+  end
+  m.serialize_result = function(...)
+    local results = {...}
+    local result_types = m.result_types()
+    return rpc.serialize_list(result_types, results)
   end
   return m
 end
