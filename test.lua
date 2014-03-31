@@ -214,23 +214,45 @@ describe("communication", function()
     describe("servant", function()
       before_each(function()
         socket = require("socket")
-        server = {
-          getsockname = function(c)
-            return "0.0.0.0", 60468
+        local return_value_index = 0
+        local return_values = {"add", "3", "4"}
+        client = {
+          receive = function()
+            return_value_index = return_value_index + 1
+            return return_values[return_value_index]
+          end,
+          send = function()
+            return true
           end
+        }
+        server = {
+          getsockname = function(s)
+            return "0.0.0.0", 60468
+          end,
+          accept = function(s)
+            return client
+          end,
         }
         socket.bind = function(ip, port)
           return server
         end
         spy.on(socket, "bind")
         mock(server)
-        ip, port = rpc.createservant(i)
+        mock(client)
+        ip, port, servant = rpc.createservant(i)
       end)
 
       it("should bind to local host at any port", function()
         assert.spy(socket.bind).was.called_with("*", 0)
         assert.same(ip, "0.0.0.0")
         assert.same(port, 60468)
+      end)
+
+      it("should handle clients", function()
+        servant:serve_client()
+        assert.spy(server.accept).called()
+        assert.spy(client.receive).called(3)
+        -- assert.spy(client.send).called()
       end)
     end)
   end)

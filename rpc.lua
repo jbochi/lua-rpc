@@ -125,12 +125,26 @@ rpc.createproxy = function(ip, port, interface)
   return proxy
 end
 
+local serve_client = function(server)
+  local client = server:accept()
+  local method_name = client:receive()
+  local method = server.interface[method_name]
+  local arg_types = method.arg_types()
+  args = {}
+  for i in ipairs(arg_types) do
+    line = client:receive()
+    args[#args + 1] = rpc.deserialize(arg_types[i], line)
+  end
+end
+
 -- server functions
 
 rpc.createservant = function(interface)
   local server = assert(socket.bind("*", 0))
+  server.interface = interface
+  server.serve_client = serve_client
   local ip, port = server:getsockname()
-  return ip, port
+  return ip, port, server
 end
 
 return rpc
