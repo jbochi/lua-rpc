@@ -185,6 +185,14 @@ describe("communication", function()
       it("should not allow invalid methods", function()
         assert.has_error(function() p.mul(3, 5) end, "Invalid method")
       end)
+
+      it("should handle errors", function()
+        client.receive = function(c)
+          return "___ERRORPC: sorry!\n"
+        end
+
+        assert.has_error(function() p.add(3, 5) end, "RPC error: sorry!")
+      end)
     end)
   end)
 end)

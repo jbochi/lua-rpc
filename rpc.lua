@@ -101,7 +101,12 @@ local proxy_call = function(proxy, method_name)
     local results = {}
     local result_types = method.result_types()
     for i in ipairs(result_types) do
-     results[#results + 1] = rpc.deserialize(result_types[i], proxy.client:receive())
+      line = string.match(proxy.client:receive(), "^(.*)\n")
+      err = string.match(line, "^___ERRORPC: (.*)$")
+      if err then
+        error("RPC error: " .. err)
+      end
+      results[#results + 1] = rpc.deserialize(result_types[i], line)
     end
     return unpack(results)
   end
