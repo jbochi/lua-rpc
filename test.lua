@@ -193,6 +193,22 @@ describe("communication", function()
 
         assert.has_error(function() p.add(3, 5) end, "RPC error: sorry!")
       end)
+
+      it("should handle multiple arguments", function()
+        i.__methods.swap = { resulttype = "double",
+                             args = {{direction="in", type="double"},
+                                     {direction="inout", type="double"}}}
+        local return_value_index = 0
+        local return_values = {"2", "1"}
+        client.receive = function(c)
+          return_value_index = return_value_index + 1
+          return return_values[return_value_index]
+        end
+        local a, b = 1, 2
+        a, b = p.swap(a, b)
+        assert.same(2, a)
+        assert.same(1, b)
+      end)
     end)
   end)
 end)
