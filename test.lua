@@ -155,7 +155,7 @@ describe("communication", function()
     end)
 
     describe("proxy", function()
-      it("should connect", function()
+      it("should connect, send args and receive result", function()
         local socket = require("socket")
         local client = {
           send = function(c, str)
