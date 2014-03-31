@@ -162,7 +162,7 @@ describe("communication", function()
             return true
           end,
           receive = function(c)
-            return "8\n"
+            return "8"
           end
         }
         socket.connect = function()
@@ -188,7 +188,7 @@ describe("communication", function()
 
       it("should handle errors", function()
         client.receive = function(c)
-          return "___ERRORPC: sorry!\n"
+          return "___ERRORPC: sorry!"
         end
 
         assert.has_error(function() p.add(3, 5) end, "RPC error: sorry!")

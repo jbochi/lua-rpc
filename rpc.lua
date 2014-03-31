@@ -101,7 +101,7 @@ local proxy_call = function(proxy, method_name)
     local results = {}
     local result_types = method.result_types()
     for i in ipairs(result_types) do
-      line = string.match(proxy.client:receive(), "^(.*)\n")
+      line = proxy.client:receive()
       err = string.match(line, "^___ERRORPC: (.*)$")
       if err then
         error("RPC error: " .. err)
