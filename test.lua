@@ -210,5 +210,28 @@ describe("communication", function()
         assert.same(1, b)
       end)
     end)
+
+    describe("servant", function()
+      before_each(function()
+        socket = require("socket")
+        server = {
+          getsockname = function(c)
+            return "0.0.0.0", 60468
+          end
+        }
+        socket.bind = function(ip, port)
+          return server
+        end
+        spy.on(socket, "bind")
+        mock(server)
+        ip, port = rpc.createservant(i)
+      end)
+
+      it("should bind to local host at any port", function()
+        assert.spy(socket.bind).was.called_with("*", 0)
+        assert.same(ip, "0.0.0.0")
+        assert.same(port, 60468)
+      end)
+    end)
   end)
 end)

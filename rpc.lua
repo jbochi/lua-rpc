@@ -1,3 +1,5 @@
+local socket = require("socket")
+
 local rpc = {}
 
 -- create a method based on its interface definition
@@ -117,11 +119,18 @@ local proxy_mt = {
 }
 
 rpc.createproxy = function(ip, port, interface)
-  local socket = require("socket")
   local client = assert(socket.connect(ip, port))
   local proxy = {interface=interface, client=client}
   setmetatable(proxy, proxy_mt)
   return proxy
+end
+
+-- server functions
+
+rpc.createservant = function(interface)
+  local server = assert(socket.bind("*", 0))
+  local ip, port = server:getsockname()
+  return ip, port
 end
 
 return rpc
