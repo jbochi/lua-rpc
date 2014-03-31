@@ -155,9 +155,9 @@ describe("communication", function()
     end)
 
     describe("proxy", function()
-      it("should connect, send args and receive result", function()
-        local socket = require("socket")
-        local client = {
+      before_each(function()
+        socket = require("socket")
+        client = {
           send = function(c, str)
             return true
           end,
@@ -170,14 +170,20 @@ describe("communication", function()
         end
         spy.on(socket, "connect")
         mock(client)
-
         p = rpc.createproxy("127.0.0.1", 1234, i)
+      end)
+
+      it("should handle the happy path", function()
         local r = p.add(3, 5)
 
         assert.spy(socket.connect).was.called_with("127.0.0.1", 1234)
         assert.spy(client.send).was.called_with(client, "add\n3\n5\n")
         assert.spy(client.receive).was.called_with(client)
         assert.same(8, r)
+      end)
+
+      it("should not allow invalid methods", function()
+        assert.has_error(function() p.mul(3, 5) end, "Invalid method")
       end)
     end)
   end)

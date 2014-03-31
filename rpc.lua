@@ -94,6 +94,9 @@ end
 local proxy_call = function(proxy, method_name)
   return function(...)
     local method = proxy.interface[method_name]
+    if method == nil then
+      error("Invalid method")
+    end
     proxy.client:send(method.serialize_call(...))
     local results = {}
     local result_types = method.result_types()
