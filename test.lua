@@ -127,19 +127,12 @@ describe("deserialization", function()
     assert.same("\n", rpc.deserialize("string", rpc.serialize("string", "\n")))
     assert.same("\\n\\", rpc.deserialize("string", rpc.serialize("string", "\\n\\")))
   end)
-
-  it("should deserialize lists", function()
-    assert.same({1, 2, 3}, rpc.deserialize_list({"double", "double", "double"},
-                            rpc.serialize_list({"double", "double", "double"}, {1, 2, 3})))
-    assert.same({"a", 4}, rpc.deserialize_list({"string", "double"},
-                            rpc.serialize_list({"string", "double"}, {"a", 4})))
-  end)
 end)
 
 describe("communication", function()
   describe("a simple method", function ()
     before_each(function()
-      local i = interface { methods = {
+      i = interface { methods = {
         add = { resulttype = "double",
                 args = {{direction="in", type="double"},
                         {direction="in", type="double"},
@@ -159,6 +152,33 @@ describe("communication", function()
 
     it("should serialize returned values", function()
       assert.same("7\n", add.serialize_result(7))
+    end)
+
+    describe("proxy", function()
+      it("should connect", function()
+        local socket = require("socket")
+        local client = {
+          send = function(c, str)
+            return true
+          end,
+          receive = function(c)
+            return "8\n"
+          end
+        }
+        socket.connect = function()
+          return client
+        end
+        spy.on(socket, "connect")
+        mock(client)
+
+        p = rpc.createproxy("127.0.0.1", 1234, i)
+        local r = p.add(3, 5)
+
+        assert.spy(socket.connect).was.called_with("127.0.0.1", 1234)
+        assert.spy(client.send).was.called_with(client, "add\n3\n5\n")
+        assert.spy(client.receive).was.called_with(client)
+        assert.same(8, r)
+      end)
     end)
   end)
 end)

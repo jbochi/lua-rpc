@@ -88,14 +88,32 @@ rpc.serialize_list = function(arg_types, args)
   return table.concat(lines, "\n")
 end
 
-rpc.deserialize_list = function(arg_types, str)
-  args = {}
-  local i = 0
-  for line in string.gmatch(str, "[^\n]+") do
-    i = i + 1
-    args[i] = rpc.deserialize(arg_types[i], line)
+
+--- proxy functions
+
+local proxy_call = function(proxy, method_name)
+  return function(...)
+    local method = proxy.interface[method_name]
+    proxy.client:send(method.serialize_call(...))
+    local results = {}
+    local result_types = method.result_types()
+    for i in ipairs(result_types) do
+     results[#results + 1] = rpc.deserialize(result_types[i], proxy.client:receive())
+    end
+    return unpack(results)
   end
-  return args
+end
+
+local proxy_mt = {
+  __index = proxy_call
+}
+
+rpc.createproxy = function(ip, port, interface)
+  local socket = require("socket")
+  local client = assert(socket.connect(ip, port))
+  local proxy = {interface=interface, client=client}
+  setmetatable(proxy, proxy_mt)
+  return proxy
 end
 
 return rpc
