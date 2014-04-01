@@ -92,7 +92,6 @@ end
 
 
 --- proxy functions
-
 local proxy_call = function(proxy, method_name)
   return function(...)
     local method = proxy.interface[method_name]
@@ -125,6 +124,7 @@ rpc.createproxy = function(ip, port, interface)
   return proxy
 end
 
+-- server functions
 local serve_client = function(server)
   local client = server:accept()
   local method_name = client:receive()
@@ -139,8 +139,6 @@ local serve_client = function(server)
   local result_str = rpc.serialize_list(method.result_types(), results)
   client:send(result_str)
 end
-
--- server functions
 
 rpc.createServant = function(implementation, interface)
   local server = assert(socket.bind("*", 0))
