@@ -135,14 +135,18 @@ local serve_client = function(server)
     line = client:receive()
     args[#args + 1] = rpc.deserialize(arg_types[i], line)
   end
+  local results = {server.implementation[method_name](unpack(args))}
+  local result_str = rpc.serialize_list(method.result_types(), results)
+  client:send(result_str)
 end
 
 -- server functions
 
-rpc.createservant = function(interface)
+rpc.createServant = function(implementation, interface)
   local server = assert(socket.bind("*", 0))
   server.interface = interface
   server.serve_client = serve_client
+  server.implementation = implementation
   local ip, port = server:getsockname()
   return ip, port, server
 end

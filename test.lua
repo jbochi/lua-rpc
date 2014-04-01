@@ -239,7 +239,10 @@ describe("communication", function()
         spy.on(socket, "bind")
         mock(server)
         mock(client)
-        ip, port, servant = rpc.createservant(i)
+        implementation = {
+          add = function(a, b) return a + b end
+        }
+        ip, port, servant = rpc.createServant(implementation, i)
       end)
 
       it("should bind to local host at any port", function()
@@ -251,8 +254,8 @@ describe("communication", function()
       it("should handle clients", function()
         servant:serve_client()
         assert.spy(server.accept).called()
-        assert.spy(client.receive).called(3)
-        -- assert.spy(client.send).called()
+        assert.spy(client.receive).called(3) -- three lines
+        assert.spy(client.send).called_with(client, "7\n")
       end)
     end)
   end)
