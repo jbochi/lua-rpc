@@ -105,9 +105,9 @@ describe("serialization", function()
 
     it("should validate the number of arguments", function()
       assert.has_error(function() rpc.serialize_list({"string"}, {}) end,
-        "Wrong number of arguments")
+        "Wrong number of arguments (0 instead of 1)")
       assert.has_error(function() rpc.serialize_list({"string"}, {"a", "b"}) end,
-        "Wrong number of arguments")
+        "Wrong number of arguments (2 instead of 1)")
     end)
 
     it("should validate the argument types", function()
@@ -146,8 +146,8 @@ describe("communication", function()
     end)
 
     it("should validate the number of arguments for a call", function()
-      assert.has_error(function() add.serialize_call(4) end, "Wrong number of arguments")
-      assert.has_error(function() add.serialize_call(4, 5, 6) end, "Wrong number of arguments")
+      assert.has_error(function() add.serialize_call(4) end, "Wrong number of arguments (2 instead of 3)")
+      assert.has_error(function() add.serialize_call(4, 5, 6) end, "Wrong number of arguments (4 instead of 3)")
     end)
 
     it("should serialize returned values", function()
@@ -161,6 +161,7 @@ describe("communication", function()
           send = function(c, str)
             return true
           end,
+          settimeout = function() end,
           receive = function(c)
             return "8"
           end
@@ -170,7 +171,7 @@ describe("communication", function()
         end
         spy.on(socket, "connect")
         mock(client)
-        p = rpc.createproxy("127.0.0.1", 1234, i)
+        p = rpc.create_proxy_from_interface("127.0.0.1", 1234, i)
       end)
 
       it("should handle the happy path", function()
@@ -221,7 +222,7 @@ describe("communication", function()
             return_value_index = return_value_index + 1
             return return_values[return_value_index]
           end,
-          send = function()
+          send = function(arg)
             return true
           end
         }
@@ -229,8 +230,9 @@ describe("communication", function()
           getsockname = function(s)
             return "0.0.0.0", 60468
           end,
+          settimeout = function() end,
           accept = function(s)
-            return client
+            return client, nil
           end,
         }
         socket.bind = function(ip, port)
@@ -242,7 +244,9 @@ describe("communication", function()
         implementation = {
           add = function(a, b) return a + b end
         }
-        ip, port, servant = rpc.createServant(implementation, i)
+        servant = rpc.create_servant_from_interface(implementation, i)
+        ip = servant.ip
+        port = servant.port
       end)
 
       it("should bind to local host at any port", function()

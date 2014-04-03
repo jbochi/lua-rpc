@@ -80,7 +80,7 @@ end
 
 rpc.serialize_list = function(arg_types, args)
   if #args ~= #arg_types then
-    error("Wrong number of arguments")
+    error("Wrong number of arguments (" .. #args .. " instead of " .. #arg_types .. ")")
   end
   local lines = {}
   for i, t in ipairs(arg_types) do
@@ -102,8 +102,8 @@ local proxy_call = function(proxy, method_name)
     local results = {}
     local result_types = method.result_types()
     for i in ipairs(result_types) do
-      line = proxy.client:receive()
-      err = string.match(line, "^___ERRORPC: (.*)$")
+      line, err = proxy.client:receive()
+      err = err or string.match(line, "^___ERRORPC: (.*)$")
       if err then
         error("RPC error: " .. err)
       end
@@ -117,36 +117,108 @@ local proxy_mt = {
   __index = proxy_call
 }
 
-rpc.createproxy = function(ip, port, interface)
+rpc.create_proxy_from_interface = function(ip, port, interface)
   local client = assert(socket.connect(ip, port))
+  client:settimeout(5)
   local proxy = {interface=interface, client=client}
   setmetatable(proxy, proxy_mt)
   return proxy
 end
 
 -- server functions
-local serve_client = function(server)
-  local client = server:accept()
-  local method_name = client:receive()
-  local method = server.interface[method_name]
+local exec_procedure = function(client, method, implementation)
   local arg_types = method.arg_types()
   args = {}
   for i in ipairs(arg_types) do
     line = client:receive()
     args[#args + 1] = rpc.deserialize(arg_types[i], line)
   end
-  local results = {server.implementation[method_name](unpack(args))}
+  local results = {implementation(unpack(args))}
   local result_str = rpc.serialize_list(method.result_types(), results)
   client:send(result_str)
 end
 
-rpc.createServant = function(implementation, interface)
+local serve_client = function(servant)
+  local server = servant.server
+  local client, err = server:accept()
+  if err then
+    -- TODO: untested. handle timeout
+    return
+  end
+  local method_name, err = client:receive()
+  if err then
+    -- TODO: untested
+    client:send("___ERRORPC: Unknown error: " .. err .. "\n")
+    client:close()
+    return
+  end
+  local method = servant.interface[method_name]
+  if method == nil then
+    -- TODO: untested
+    client:send("___ERRORPC: Unknown command '" .. (method_name or "") .. "'\n")
+    client:close()
+    return
+  end
+  local implementation = servant.implementation[method_name]
+  if implementation == nil then
+    -- TODO: untested
+    client:send("___ERRORPC: Command '" .. (method_name or "") .. " not implementated'\n")
+    client:close()
+    return
+  end
+  status, err = pcall(function() exec_procedure(client, method, implementation) end)
+  if not status then
+    -- TODO: untested
+    client:send("___ERRORPC: Unknown error: '" .. err .. "'\n")
+    client:close()
+    return
+  end
+end
+
+rpc.create_servant_from_interface = function(implementation, interface)
   local server = assert(socket.bind("*", 0))
-  server.interface = interface
-  server.serve_client = serve_client
-  server.implementation = implementation
+  server:settimeout(1)
   local ip, port = server:getsockname()
-  return ip, port, server
+  local s = {
+    interface=interface,
+    serve_client=serve_client,
+    implementation=implementation,
+    ip=ip,
+    port=port,
+    server=server
+  }
+  setmetatable(s, {__index = function(o, method_name) return o.server[method_name] end })
+  return s
+end
+
+-- public methods - untested
+rpc.createproxy = function(IP, port, interface_file)
+  local int
+  interface = function(x)
+    int = rpc.interface(x)
+  end
+  assert(loadfile(interface_file))()
+  return rpc.create_proxy_from_interface(IP, port, int)
+end
+
+local servants = {}
+rpc.createServant = function(implementation, interface_file)
+  local int
+  interface = function(x)
+    int = rpc.interface(x)
+  end
+  assert(loadfile(interface_file))()
+  servant = rpc.create_servant_from_interface(implementation, int)
+  servants[#servants + 1] = servant
+  return servant
+end
+
+rpc.waitIncoming = function()
+  while true do
+    for _, servant in ipairs(servants) do
+      servant:serve_client()
+    end
+  end
 end
 
 return rpc
