@@ -177,7 +177,7 @@ end
 
 rpc.create_servant_from_interface = function(implementation, interface)
   local server = assert(socket.bind("*", 0))
-  server:settimeout(1)
+  -- server:settimeout(1)
   local ip, port = server:getsockname()
   local s = {
     interface=interface,
