@@ -225,7 +225,7 @@ rpc.create_servant_from_interface = function(implementation, interface)
   return s
 end
 
--- public methods - untested
+-- public methods (no unit tests, just integration tests)
 rpc.createProxy = function(IP, port, interface_file)
   local int
   interface = function(x)
