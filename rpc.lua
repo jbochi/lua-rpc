@@ -3,6 +3,7 @@ local socket = require("socket")
 local SERVER_ACCEPT_TIMEOUT = 1
 local SERVER_READ_TIMEOUT = 1
 local CLIENT_TIMEOUT = 5
+local MAX_SERVER_CONNECTIONS = 8
 
 local rpc = {}
 
@@ -250,6 +251,8 @@ end
 local servants = {}
 local client_servants = {}
 local open_sockets = {}
+local open_connections = 0
+
 rpc.createServant = function(implementation, interface_file)
   local int
   interface = function(x)
@@ -266,7 +269,9 @@ rpc.waitIncoming = function()
   function handle_new_client(servant)
     local client = servant:accept_new_client()
     local ip, port = client:getpeername()
-    print("New client: " .. ip .. ":" .. port)
+    open_connections = open_connections + 1
+    print("New client: " .. ip .. ":" .. port .. " (" .. open_connections .. " connected)")
+    kill_extra_clients()
     if client then
       open_sockets[#open_sockets + 1] = client
       client_servants[client] = servant
@@ -286,11 +291,24 @@ rpc.waitIncoming = function()
     end
   end
 
+  function kill_extra_clients()
+    while open_connections > MAX_SERVER_CONNECTIONS do
+      for client, servant in pairs(client_servants) do
+        local ip, port = client:getpeername()
+        print("Forcing client to close: " .. ip .. ":" .. port)
+        client:close()
+        clean_client(client)
+        break
+      end
+    end
+  end
+
   function clean_client(client)
     for i, s in ipairs(open_sockets) do
       if s == client then
         table.remove(open_sockets, i)
         client_servants[client] = nil
+        open_connections = open_connections - 1
         break
       end
     end
@@ -300,7 +318,7 @@ rpc.waitIncoming = function()
     for client, servant in pairs(client_servants) do
       local connected = client:getpeername()
       if not connected then
-        print("Client closed")
+        print("Client closed (" .. open_connections .. " connected)")
         clean_client(client)
       end
     end
