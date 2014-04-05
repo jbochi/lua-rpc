@@ -202,7 +202,7 @@ local serve_client = function(servant, client)
   if implementation == nil then
     return send_error(client, "Command '" .. (method_name or "") .. "' not implemented")
   end
-  status, err = pcall(exec_procedure, client, method, implementation)
+  local status, err = pcall(exec_procedure, client, method, implementation)
   if not status then
     return send_error(client, "Unknown error: '" .. err .. "'")
   end
