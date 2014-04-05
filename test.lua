@@ -224,7 +224,7 @@ describe("communication", function()
       before_each(function()
         socket = require("socket")
         local return_value_index = 0
-        local return_values = {"add", "3", "4"}
+        return_values = {"add", "3", "4"}
         client = {
           receive = function()
             return_value_index = return_value_index + 1
@@ -270,8 +270,58 @@ describe("communication", function()
       it("should handle clients", function()
         servant:serve_client()
         assert.spy(server.accept).called()
-        assert.spy(client.receive).called(3) -- three lines
+        assert.spy(client.receive).called(3) -- three lines for function call are read
         assert.spy(client.send).called_with(client, "7\n")
+        assert.spy(client.close).called()
+      end)
+
+      it("should ignore timeouts", function()
+        server.accept = function()
+          return nil, "timeout"
+        end
+        spy.on(server, "accept")
+        servant:serve_client()
+        assert.spy(server.accept).called()
+        assert.spy(client.receive).not_called()
+      end)
+
+      it("should handle receive timeouts", function()
+        client.receive = function()
+          return nil, "timeout"
+        end
+        spy.on(client, "receive")
+        servant:serve_client()
+        assert.spy(server.accept).called()
+        assert.spy(client.receive).called(1)
+        assert.spy(client.send).called_with(client, "___ERRORPC: Unknown error: timeout\n")
+        assert.spy(client.close).called()
+      end)
+
+      it("should handle unknown commands", function()
+        return_values = {"baz", "3", "4"}
+        servant:serve_client()
+        assert.spy(server.accept).called()
+        assert.spy(client.receive).called(1)
+        assert.spy(client.send).called_with(client, "___ERRORPC: Unknown command 'baz'\n")
+        assert.spy(client.close).called()
+      end)
+
+      it("should handle missing implementation", function()
+        servant.implementation.add = nil
+        servant:serve_client()
+        assert.spy(server.accept).called()
+        assert.spy(client.receive).called(1)
+        assert.spy(client.send).called_with(client, "___ERRORPC: Command 'add' not implemented\n")
+        assert.spy(client.close).called()
+      end)
+
+      it("should handle broken implementatios", function()
+        servant.implementation.add = function(a, b) error("error") end
+        servant:serve_client()
+        assert.spy(server.accept).called()
+        assert.spy(client.receive).called(3)
+        assert.spy(client.send).called_with(client, "___ERRORPC: Unknown error: './test.lua:319: error'\n")
+        assert.spy(client.close).called()
       end)
     end)
   end)

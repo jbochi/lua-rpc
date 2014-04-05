@@ -151,41 +151,34 @@ local exec_procedure = function(client, method, implementation)
   client:close()
 end
 
+local send_error = function(client, err)
+  client:send("___ERRORPC: " .. err .. "\n")
+  client:close()
+end
+
 local serve_client = function(servant)
   local server = servant.server
   local client, err = server:accept()
   if err then
-    -- TODO: untested. handles timeout
+    -- ignores timeouts
     return
   end
   client:settimeout(SERVER_LISTEN_TIMEOUT)
   local method_name, err = client:receive()
   if err then
-    -- TODO: untested
-    client:send("___ERRORPC: Unknown error: " .. err .. "\n")
-    client:close()
-    return
+    return send_error(client, "Unknown error: " .. err)
   end
   local method = servant.interface[method_name]
   if method == nil then
-    -- TODO: untested
-    client:send("___ERRORPC: Unknown command '" .. (method_name or "") .. "'\n")
-    client:close()
-    return
+    return send_error(client, "Unknown command '" .. (method_name or "") .. "'")
   end
   local implementation = servant.implementation[method_name]
   if implementation == nil then
-    -- TODO: untested
-    client:send("___ERRORPC: Command '" .. (method_name or "") .. " not implementated'\n")
-    client:close()
-    return
+    return send_error(client, "Command '" .. (method_name or "") .. "' not implemented")
   end
-  status, err = pcall(function() exec_procedure(client, method, implementation) end)
+  status, err = pcall(exec_procedure, client, method, implementation)
   if not status then
-    -- TODO: untested
-    client:send("___ERRORPC: Unknown error: '" .. err .. "'\n")
-    client:close()
-    return
+    return send_error(client, "Unknown error: '" .. err .. "'")
   end
 end
 
