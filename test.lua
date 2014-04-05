@@ -233,7 +233,10 @@ describe("communication", function()
           settimeout = function() end,
           send = function(arg)
             return true
-          end
+          end,
+          close = function()
+            return true
+          end,
         }
         server = {
           getsockname = function(s)

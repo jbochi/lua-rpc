@@ -148,6 +148,7 @@ local exec_procedure = function(client, method, implementation)
   local results = {implementation(unpack(args))}
   local result_str = rpc.serialize_list(method.result_types(), results)
   client:send(result_str)
+  client:close()
 end
 
 local serve_client = function(servant)
