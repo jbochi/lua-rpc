@@ -218,6 +218,7 @@ rpc.createProxy = function(IP, port, interface_file)
 end
 
 local servants = {}
+local server_sockets = {}
 rpc.createServant = function(implementation, interface_file)
   local int
   interface = function(x)
@@ -225,14 +226,16 @@ rpc.createServant = function(implementation, interface_file)
   end
   assert(loadfile(interface_file))()
   servant = rpc.create_servant_from_interface(implementation, int)
-  servants[#servants + 1] = servant
+  servants[servant.server] = servant
+  server_sockets[#server_sockets + 1] = servant.server
   return servant
 end
 
 rpc.waitIncoming = function()
   while true do
-    for _, servant in ipairs(servants) do
-      servant:serve_client()
+    local ready = socket.select(server_sockets)
+    for _, socket in ipairs(ready) do
+      servants[socket]:serve_client()
     end
   end
 end
