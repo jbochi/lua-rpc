@@ -104,8 +104,6 @@ describe("serialization", function()
     end)
 
     it("should validate the number of arguments", function()
-      assert.has_error(function() rpc.serialize_list({"string"}, {}) end,
-        "Wrong number of arguments (0 instead of 1)")
       assert.has_error(function() rpc.serialize_list({"string"}, {"a", "b"}) end,
         "Wrong number of arguments (2 instead of 1)")
     end)
@@ -113,6 +111,10 @@ describe("serialization", function()
     it("should validate the argument types", function()
       assert.has_error(function() rpc.serialize_list({"string"}, {7}) end,
         "String expected")
+    end)
+
+    it("should add missing arguments", function()
+      assert.same("\n\n0\n", rpc.serialize_list({"string", "string", "double"}, {}))
     end)
   end)
 end)
@@ -153,8 +155,11 @@ describe("communication", function()
       assert.same("add\n3\n4\n", add.serialize_call(3, 4))
     end)
 
+    it("should add missing arguments to a call", function()
+      assert.same("add\n4\n0\n", add.serialize_call(4))
+    end)
+
     it("should validate the number of arguments for a call", function()
-      assert.has_error(function() add.serialize_call(4) end, "Wrong number of arguments (2 instead of 3)")
       assert.has_error(function() add.serialize_call(4, 5, 6) end, "Wrong number of arguments (4 instead of 3)")
     end)
 

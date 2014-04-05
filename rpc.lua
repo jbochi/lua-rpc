@@ -91,12 +91,21 @@ rpc.deserialize = function(arg_type, arg)
 end
 
 rpc.serialize_list = function(arg_types, args)
-  if #args ~= #arg_types then
+  if #args > #arg_types then
     error("Wrong number of arguments (" .. #args .. " instead of " .. #arg_types .. ")")
   end
   local lines = {}
   for i, t in ipairs(arg_types) do
-    lines[#lines + 1] = rpc.serialize(t, args[i])
+    local arg = args[i]
+    -- add missing arguments
+    if arg == nil then
+      if t == "double" then
+        arg = 0
+      else
+        arg = ""
+      end
+    end
+    lines[#lines + 1] = rpc.serialize(t, arg)
   end
   lines[#lines + 1] = ""
   return table.concat(lines, "\n")
