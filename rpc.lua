@@ -72,13 +72,21 @@ end
 
 rpc.deserialize = function(arg_type, arg)
   if arg_type == "double" then
-    return tonumber(arg)
+    local n = tonumber(arg)
+    if n == nil then
+      error("Double expected")
+    end
+    return n
   else
-    return (string.gsub(
+    s = (string.gsub(
               string.gsub(
                 string.gsub(arg, "^\\n", "\n"),
               "([^\\])\\n", "%1\n"),
             "\\\\", "\\"))
+    if arg_type == "char" and #s > 1 then
+      error("Char expected")
+    end
+    return s
   end
 end
 

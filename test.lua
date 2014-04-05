@@ -118,6 +118,14 @@ describe("serialization", function()
 end)
 
 describe("deserialization", function()
+  it("should validate doubles", function()
+    assert.has_error(function() rpc.deserialize("double", "abc") end, "Double expected")
+  end)
+
+  it("should validate chars", function()
+    assert.has_error(function() rpc.deserialize("char", "abc") end, "Char expected")
+  end)
+
   it("should deserialize to original value", function()
     assert.same("abc", rpc.deserialize("string", rpc.serialize("string", "abc")))
     assert.same("a", rpc.deserialize("char", rpc.serialize("char", "a")))
