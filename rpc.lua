@@ -270,7 +270,7 @@ rpc.waitIncoming = function()
     end
   end
 
-  function clean_client()
+  function clean_client(client)
     for i, s in ipairs(open_sockets) do
       if s == client then
         table.remove(open_sockets, i)
