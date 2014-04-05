@@ -171,13 +171,11 @@ describe("communication", function()
       before_each(function()
         socket = require("socket")
         local connected = false
-        reconnection_avoided = false
         client = {
+          getpeername = function()
+            return connected
+          end,
           connect = function(client, ip, port)
-            if connected then
-              reconnection_avoided = true
-              return nil, "already connected"
-            end
             connected = true
             return client, nil
           end,
@@ -211,8 +209,7 @@ describe("communication", function()
         local r = p.add(3, 5)
         local s = p.add(3, 5)
 
-        assert.spy(client.connect).was.called(2)
-        assert.same(true, reconnection_avoided)
+        assert.spy(client.connect).was.called(1)
         assert.same(8, r)
         assert.same(8, s)
       end)
@@ -242,7 +239,7 @@ describe("communication", function()
                              args = {{direction="in", type="double"},
                                      {direction="inout", type="double"}}}
         local return_value_index = 0
-        local return_values = {"2", "1"}
+        local return_values = {"", "2", "1"}
         client.receive = function(c)
           return_value_index = return_value_index + 1
           return return_values[return_value_index]

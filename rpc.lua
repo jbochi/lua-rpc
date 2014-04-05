@@ -119,14 +119,26 @@ local proxy_call = function(proxy, method_name)
     if method == nil then
       error("Invalid method")
     end
+    local sent = false
     local client = proxy.client
-    local _, err = client:connect(proxy.ip, proxy.port)
-    if err == nil then
-      client:settimeout(CLIENT_TIMEOUT)
-    elseif err ~= "already connected" then
-      error(err)
+    local connected = proxy.client:getpeername()
+    while not sent do
+      if not connected then
+        client:connect(proxy.ip, proxy.port)
+        client:settimeout(CLIENT_TIMEOUT)
+      end
+      client:send(method.serialize_call(...))
+      local _, err = client:receive(0)
+      if err == "closed" then
+        connected = false
+        client = socket.tcp()
+        proxy.client = client
+      elseif err then
+        error("RPC error: " .. err)
+      else
+        sent = true
+      end
     end
-    client:send(method.serialize_call(...))
     local results = {}
     local result_types = method.result_types()
     for i in ipairs(result_types) do
