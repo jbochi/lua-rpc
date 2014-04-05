@@ -78,7 +78,7 @@ rpc.deserialize = function(arg_type, arg)
     end
     return n
   else
-    s = (string.gsub(
+    local s = (string.gsub(
               string.gsub(
                 string.gsub(arg, "^\\n", "\n"),
               "([^\\])\\n", "%1\n"),
