@@ -205,7 +205,7 @@ rpc.create_servant_from_interface = function(implementation, interface)
 end
 
 -- public methods - untested
-rpc.createproxy = function(IP, port, interface_file)
+rpc.createProxy = function(IP, port, interface_file)
   local int
   interface = function(x)
     int = rpc.interface(x)
