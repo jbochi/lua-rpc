@@ -251,12 +251,14 @@ rpc.createServant = function(implementation, interface_file)
 end
 
 rpc.waitIncoming = function()
-  while true do
+  function handle_connections()
     local ready = socket.select(open_sockets)
     for _, socket in ipairs(ready) do
       local servant = servants[socket]
       if servant then
-        client = servant:accept_new_client()
+        local client = servant:accept_new_client()
+        local ip, port = client:getpeername()
+        print("New client: " .. ip .. ":" .. port)
         if client then
           open_sockets[#open_sockets + 1] = client
           client_servants[client] = servant
@@ -266,6 +268,31 @@ rpc.waitIncoming = function()
         servant:serve_client(socket)
       end
     end
+  end
+
+  function clean_client()
+    for i, s in ipairs(open_sockets) do
+      if s == client then
+        table.remove(open_sockets, i)
+        client_servants[client] = nil
+        break
+      end
+    end
+  end
+
+  function clean_closed_connections()
+    for client, servant in pairs(client_servants) do
+      local connected = client:getpeername()
+      if not connected then
+        print("Client closed")
+        clean_client(client)
+      end
+    end
+  end
+
+  while true do
+    handle_connections()
+    clean_closed_connections()
   end
 end
 
