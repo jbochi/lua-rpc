@@ -221,6 +221,14 @@ describe("communication", function()
         assert.has_error(function() p.mul(3, 5) end, "Invalid method")
       end)
 
+      it("should connection errors", function()
+        client.connect = function(c)
+          error("failed to connect")
+        end
+
+        assert.has_error(function() p.add(3, 5) end, "failed to connect")
+      end)
+
       it("should handle errors", function()
         client.receive = function(c)
           return "___ERRORPC: sorry!"
