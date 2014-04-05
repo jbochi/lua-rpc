@@ -315,12 +315,14 @@ describe("communication", function()
         assert.spy(client.close).called()
       end)
 
-      it("should handle broken implementatios", function()
+      it("should handle broken implementations", function()
+        local ln = debug.getinfo(1).currentline + 1
         servant.implementation.add = function(a, b) error("error") end
         servant:serve_client()
         assert.spy(server.accept).called()
         assert.spy(client.receive).called(3)
-        assert.spy(client.send).called_with(client, "___ERRORPC: Unknown error: './test.lua:319: error'\n")
+        local expected_error = "___ERRORPC: Unknown error: './test.lua:" .. ln .. ": error'\n"
+        assert.spy(client.send).called_with(client, expected_error)
         assert.spy(client.close).called()
       end)
     end)
