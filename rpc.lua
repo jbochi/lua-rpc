@@ -1,8 +1,8 @@
 local socket = require("socket")
 
-local SERVER_ACCEPT_TIMEOUT = 5
+local SERVER_ACCEPT_TIMEOUT = 1
 local SERVER_READ_TIMEOUT = 1
-local CLIENT_TIMEOUT = 1
+local CLIENT_TIMEOUT = 5
 
 local rpc = {}
 
@@ -102,11 +102,13 @@ local proxy_call = function(proxy, method_name)
     if method == nil then
       error("Invalid method")
     end
-    proxy.client:send(method.serialize_call(...))
+    local client = assert(socket.connect(proxy.ip, proxy.port))
+    client:settimeout(CLIENT_TIMEOUT)
+    client:send(method.serialize_call(...))
     local results = {}
     local result_types = method.result_types()
     for i in ipairs(result_types) do
-      line, err = proxy.client:receive()
+      line, err = client:receive()
       err = err or string.match(line, "^___ERRORPC: (.*)$")
       if err then
         error("RPC error: " .. err)
@@ -122,9 +124,7 @@ local proxy_mt = {
 }
 
 rpc.create_proxy_from_interface = function(ip, port, interface)
-  local client = assert(socket.connect(ip, port))
-  client:settimeout(CLIENT_TIMEOUT)
-  local proxy = {interface=interface, client=client}
+  local proxy = {ip=ip, port=port, interface=interface}
   setmetatable(proxy, proxy_mt)
   return proxy
 end
