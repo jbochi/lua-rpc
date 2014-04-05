@@ -222,6 +222,7 @@ describe("communication", function()
             return_value_index = return_value_index + 1
             return return_values[return_value_index]
           end,
+          settimeout = function() end,
           send = function(arg)
             return true
           end

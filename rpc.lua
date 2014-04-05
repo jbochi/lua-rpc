@@ -1,5 +1,9 @@
 local socket = require("socket")
 
+local SERVER_ACCEPT_TIMEOUT = 5
+local SERVER_READ_TIMEOUT = 1
+local CLIENT_TIMEOUT = 1
+
 local rpc = {}
 
 -- create a method based on its interface definition
@@ -119,7 +123,7 @@ local proxy_mt = {
 
 rpc.create_proxy_from_interface = function(ip, port, interface)
   local client = assert(socket.connect(ip, port))
-  client:settimeout(5)
+  client:settimeout(CLIENT_TIMEOUT)
   local proxy = {interface=interface, client=client}
   setmetatable(proxy, proxy_mt)
   return proxy
@@ -142,9 +146,10 @@ local serve_client = function(servant)
   local server = servant.server
   local client, err = server:accept()
   if err then
-    -- TODO: untested. handle timeout
+    -- TODO: untested. handles timeout
     return
   end
+  client:settimeout(SERVER_LISTEN_TIMEOUT)
   local method_name, err = client:receive()
   if err then
     -- TODO: untested
@@ -177,7 +182,7 @@ end
 
 rpc.create_servant_from_interface = function(implementation, interface)
   local server = assert(socket.bind("*", 0))
-  -- server:settimeout(1)
+  server:settimeout(SERVER_ACCEPT_TIMEOUT)
   local ip, port = server:getsockname()
   local s = {
     interface=interface,

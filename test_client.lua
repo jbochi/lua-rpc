@@ -15,7 +15,7 @@ print("Clients are going to connect to IP " .. IP .. " and ports", porta1, porta
 local p1 = luarpc.createproxy(IP, porta1, arq_interface)
 local p2 = luarpc.createproxy(IP, porta2, arq_interface)
 
-print("Clients created")
+print("Clients connected")
 
 local r, s = p1.foo(3, 5)
 
