@@ -170,7 +170,17 @@ describe("communication", function()
     describe("proxy", function()
       before_each(function()
         socket = require("socket")
+        local connected = false
+        reconnection_avoided = false
         client = {
+          connect = function(client, ip, port)
+            if connected then
+              reconnection_avoided = true
+              return nil, "already connected"
+            end
+            connected = true
+            return client, nil
+          end,
           send = function(c, str)
             return true
           end,
@@ -179,10 +189,10 @@ describe("communication", function()
             return "8"
           end
         }
-        socket.connect = function()
+        socket.tcp = function()
           return client
         end
-        spy.on(socket, "connect")
+        spy.on(socket, "tcp")
         mock(client)
         p = rpc.create_proxy_from_interface("127.0.0.1", 1234, i)
       end)
@@ -190,10 +200,21 @@ describe("communication", function()
       it("should handle the happy path", function()
         local r = p.add(3, 5)
 
-        assert.spy(socket.connect).was.called_with("127.0.0.1", 1234)
+        assert.spy(socket.tcp).called()
+        assert.spy(client.connect).was.called_with(client, "127.0.0.1", 1234)
         assert.spy(client.send).was.called_with(client, "add\n3\n5\n")
         assert.spy(client.receive).was.called_with(client)
         assert.same(8, r)
+      end)
+
+      it("should reuse connections", function()
+        local r = p.add(3, 5)
+        local s = p.add(3, 5)
+
+        assert.spy(client.connect).was.called(2)
+        assert.same(true, reconnection_avoided)
+        assert.same(8, r)
+        assert.same(8, s)
       end)
 
       it("should not allow invalid methods", function()

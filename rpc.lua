@@ -119,8 +119,13 @@ local proxy_call = function(proxy, method_name)
     if method == nil then
       error("Invalid method")
     end
-    local client = assert(socket.connect(proxy.ip, proxy.port))
-    client:settimeout(CLIENT_TIMEOUT)
+    local client = proxy.client
+    local _, err = client:connect(proxy.ip, proxy.port)
+    if err == nil then
+      client:settimeout(CLIENT_TIMEOUT)
+    elseif err ~= "already connected" then
+      error(err)
+    end
     client:send(method.serialize_call(...))
     local results = {}
     local result_types = method.result_types()
@@ -141,7 +146,12 @@ local proxy_mt = {
 }
 
 rpc.create_proxy_from_interface = function(ip, port, interface)
-  local proxy = {ip=ip, port=port, interface=interface}
+  local proxy = {
+    ip=ip,
+    port=port,
+    client=socket.tcp(),
+    interface=interface
+  }
   setmetatable(proxy, proxy_mt)
   return proxy
 end
