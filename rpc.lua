@@ -157,7 +157,6 @@ local exec_procedure = function(client, method, implementation)
   local results = {implementation(unpack(args))}
   local result_str = rpc.serialize_list(method.result_types(), results)
   client:send(result_str)
-  client:close()
 end
 
 local send_error = function(client, err)
@@ -165,7 +164,7 @@ local send_error = function(client, err)
   client:close()
 end
 
-local serve_client = function(servant)
+local accept_new_client = function(servant)
   local server = servant.server
   local client, err = server:accept()
   if err then
@@ -173,6 +172,14 @@ local serve_client = function(servant)
     return
   end
   client:settimeout(SERVER_LISTEN_TIMEOUT)
+  return client
+end
+
+local serve_client = function(servant, client)
+  if client == nil then
+    client = servant:accept_new_client()
+    if client == nil then return end
+  end
   local method_name, err = client:receive()
   if err then
     return send_error(client, "Unknown error: " .. err)
@@ -197,6 +204,7 @@ rpc.create_servant_from_interface = function(implementation, interface)
   local ip, port = server:getsockname()
   local s = {
     interface=interface,
+    accept_new_client=accept_new_client,
     serve_client=serve_client,
     implementation=implementation,
     ip=ip,
@@ -218,7 +226,8 @@ rpc.createProxy = function(IP, port, interface_file)
 end
 
 local servants = {}
-local server_sockets = {}
+local client_servants = {}
+local open_sockets = {}
 rpc.createServant = function(implementation, interface_file)
   local int
   interface = function(x)
@@ -227,15 +236,25 @@ rpc.createServant = function(implementation, interface_file)
   assert(loadfile(interface_file))()
   servant = rpc.create_servant_from_interface(implementation, int)
   servants[servant.server] = servant
-  server_sockets[#server_sockets + 1] = servant.server
+  open_sockets[#open_sockets + 1] = servant.server
   return servant
 end
 
 rpc.waitIncoming = function()
   while true do
-    local ready = socket.select(server_sockets)
+    local ready = socket.select(open_sockets)
     for _, socket in ipairs(ready) do
-      servants[socket]:serve_client()
+      local servant = servants[socket]
+      if servant then
+        client = servant:accept_new_client()
+        if client then
+          open_sockets[#open_sockets + 1] = client
+          client_servants[client] = servant
+        end
+      else
+        servant = client_servants[socket]
+        servant:serve_client(socket)
+      end
     end
   end
 end

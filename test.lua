@@ -277,7 +277,7 @@ describe("communication", function()
         assert.spy(server.accept).called()
         assert.spy(client.receive).called(3) -- three lines for function call are read
         assert.spy(client.send).called_with(client, "7\n")
-        assert.spy(client.close).called()
+        assert.spy(client.close).not_called()
       end)
 
       it("should ignore timeouts", function()
