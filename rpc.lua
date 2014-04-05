@@ -251,18 +251,22 @@ rpc.createServant = function(implementation, interface_file)
 end
 
 rpc.waitIncoming = function()
+  function handle_new_client(servant)
+    local client = servant:accept_new_client()
+    local ip, port = client:getpeername()
+    print("New client: " .. ip .. ":" .. port)
+    if client then
+      open_sockets[#open_sockets + 1] = client
+      client_servants[client] = servant
+    end
+  end
+
   function handle_connections()
     local ready = socket.select(open_sockets)
     for _, socket in ipairs(ready) do
       local servant = servants[socket]
       if servant then
-        local client = servant:accept_new_client()
-        local ip, port = client:getpeername()
-        print("New client: " .. ip .. ":" .. port)
-        if client then
-          open_sockets[#open_sockets + 1] = client
-          client_servants[client] = servant
-        end
+        handle_new_client(servant)
       else
         servant = client_servants[socket]
         servant:serve_client(socket)
