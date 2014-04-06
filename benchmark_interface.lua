@@ -18,6 +18,11 @@ interface { name = inttestes,
                  resulttype = "double",
                  args = {{direction = "in",
                           type = "string"}}
+               },
+               boo_deser = {
+                 resulttype = "double",
+                 args = {{direction = "in",
+                          type = "string"}}
                }
              }
             }

@@ -11,6 +11,17 @@ myobj1 = { foo =
            boo =
             function (s)
               return #s
+            end,
+          boo_deser =
+            function (s)
+              tbl = {}
+              cmd = "tbl = " .. s
+              loadstring(cmd)()
+              local size = 0
+              for k, v in pairs(tbl) do
+                size = size + 1
+              end
+              return size
             end
 }
 
