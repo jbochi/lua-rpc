@@ -249,6 +249,13 @@ describe("communication", function()
         assert.same(2, a)
         assert.same(1, b)
       end)
+
+      it("should handle void functions", function()
+        i.__methods.void = { resulttype = "void",
+                             args = {}}
+        assert.same(true, p.void() == nil)
+        assert.spy(client.receive).was.not_called()
+      end)
     end)
 
     describe("servant", function()
