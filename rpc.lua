@@ -173,6 +173,17 @@ rpc.create_proxy_from_interface = function(ip, port, interface)
 end
 
 -- server functions
+local accept_new_client = function(servant)
+  local server = servant.server
+  local client, err = server:accept()
+  if err then
+    -- ignores timeouts
+    return
+  end
+  client:settimeout(SERVER_LISTEN_TIMEOUT)
+  return client
+end
+
 local exec_procedure = function(client, method, implementation)
   local arg_types = method.arg_types()
   args = {}
@@ -188,17 +199,6 @@ end
 local send_error = function(client, err)
   client:send("___ERRORPC: " .. err .. "\n")
   client:close()
-end
-
-local accept_new_client = function(servant)
-  local server = servant.server
-  local client, err = server:accept()
-  if err then
-    -- ignores timeouts
-    return
-  end
-  client:settimeout(SERVER_LISTEN_TIMEOUT)
-  return client
 end
 
 local serve_client = function(servant, client)
