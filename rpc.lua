@@ -3,7 +3,7 @@ local socket = require("socket")
 local SERVER_ACCEPT_TIMEOUT = 1
 local SERVER_READ_TIMEOUT = 1
 local CLIENT_TIMEOUT = 5
-local MAX_SERVER_CONNECTIONS = 8
+local MAX_SERVER_CONNECTIONS = 3
 
 local rpc = {}
 
