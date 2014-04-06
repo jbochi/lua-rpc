@@ -244,7 +244,7 @@ rpc.createProxy = function(IP, port, interface_file)
   interface = function(x)
     int = rpc.interface(x)
   end
-  assert(loadfile(interface_file))()
+  dofile(interface_file)
   return rpc.create_proxy_from_interface(IP, port, int)
 end
 
@@ -258,7 +258,7 @@ rpc.createServant = function(implementation, interface_file)
   interface = function(x)
     int = rpc.interface(x)
   end
-  assert(loadfile(interface_file))()
+  dofile(interface_file)
   servant = rpc.create_servant_from_interface(implementation, int)
   servants[servant.server] = servant
   open_sockets[#open_sockets + 1] = servant.server
