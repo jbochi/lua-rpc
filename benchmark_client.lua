@@ -22,6 +22,6 @@ for test_name, test in pairs(tests) do
     end_time = os.clock()
 
     elapsed_time = end_time - start_time
-    print(test_name, client_name, elapsed_time)
+    print(test_name, client_name, string.format("%.5fs", elapsed_time))
   end
 end
