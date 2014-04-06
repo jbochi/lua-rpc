@@ -222,10 +222,15 @@ local serve_client = function(servant, client)
   if not status then
     return send_error(client, "Unknown error: '" .. err .. "'")
   end
+  if not servant.keepalive then
+    client:close()
+  end
 end
 
-rpc.create_servant_from_interface = function(implementation, interface)
-  local server = assert(socket.bind("*", 0))
+rpc.create_servant_from_interface = function(implementation, interface, port, keepalive)
+  port = port or 0
+  local server = assert(socket.bind("*", port))
+  if keepalive == nil then keepalive = true end
   server:settimeout(SERVER_ACCEPT_TIMEOUT)
   local ip, port = server:getsockname()
   local s = {
@@ -233,6 +238,7 @@ rpc.create_servant_from_interface = function(implementation, interface)
     accept_new_client=accept_new_client,
     serve_client=serve_client,
     implementation=implementation,
+    keepalive=keepalive,
     ip=ip,
     port=port,
     server=server
@@ -256,13 +262,13 @@ local client_servants = {}
 local open_sockets = {}
 local open_connections = 0
 
-rpc.createServant = function(implementation, interface_file)
+rpc.createServant = function(implementation, interface_file, ...)
   local int
   interface = function(x)
     int = rpc.interface(x)
   end
   dofile(interface_file)
-  servant = rpc.create_servant_from_interface(implementation, int)
+  servant = rpc.create_servant_from_interface(implementation, int, ...)
   servants[servant.server] = servant
   open_sockets[#open_sockets + 1] = servant.server
   return servant
