@@ -48,7 +48,10 @@ end
 local interface_mt = {
   __index = function(o, method_name)
     local m = o.__methods[method_name]
-    if m then return method(method_name, m) end
+    if m then
+      o[method_name] = method(method_name, m)
+      return o[method_name]
+    end
   end
 }
 
@@ -115,7 +118,7 @@ end
 
 --- proxy functions
 local proxy_call = function(proxy, method_name)
-  return function(...)
+  proxy[method_name] = function(...)
     local method = proxy.interface[method_name]
     if method == nil then
       error("Invalid method")
@@ -155,6 +158,7 @@ local proxy_call = function(proxy, method_name)
     end
     return unpack(results)
   end
+  return proxy[method_name]
 end
 
 local proxy_mt = {
@@ -243,7 +247,12 @@ rpc.create_servant_from_interface = function(implementation, interface, port, ke
     port=port,
     server=server
   }
-  setmetatable(s, {__index = function(o, method_name) return o.server[method_name] end })
+  setmetatable(s, {__index =
+    function(o, method_name)
+      o[method_name] = o.server[method_name]
+      return o[method_name]
+    end
+  })
   return s
 end
 
