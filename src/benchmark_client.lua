@@ -1,44 +1,46 @@
 luarpc = require("rpc")
+socket = require("socket")
 
 arq_interface = "benchmark_interface.lua"
 
 local client_factories = {
-  dont = function() return luarpc.createProxy("localhost", 10000, arq_interface) end,
-  keep = function() return luarpc.createProxy("localhost", 10001, arq_interface) end,
+  {"dont", function() return luarpc.createProxy("localhost", 10000, arq_interface) end},
+  {"keep", function() return luarpc.createProxy("localhost", 10001, arq_interface) end},
 }
 
-local tests = {}
-tests.correction = function(client)
-  assert(client.foo(1, 2, 3) == 3)
-  assert(client.foo2() == nil)
-  assert(client.boo("test") == 4)
-end
+local tests = {
+  {"correction", function(client)
+    assert(client.foo(1, 2, 3) == 3)
+    assert(client.foo2() == nil)
+    assert(client.boo("test") == 4)
+  end},
 
-tests.boo_long = function(client)
-  local s = string.rep("test", 10000)
-  assert(client.boo(s), 40000)
-end
+  {"boo_long", function(client)
+    local s = string.rep("test", 10000)
+    assert(client.boo(s), 40000)
+  end},
 
-tests.boo_short = function(client)
-  local s = string.rep("test", 1)
-  assert(client.boo(s), 4)
-end
+  {"boo_short", function(client)
+    local s = string.rep("test", 1)
+    assert(client.boo(s), 4)
+  end},
 
-tests.table_ser = function(client)
-  local tbl = {}
-  for i = 1, 100 do
-    tbl[i] = i
-  end
-  assert(client.boo(serialize(tbl)) > 100)
-end
+  {"table_ser", function(client)
+    local tbl = {}
+    for i = 1, 100 do
+      tbl[i] = i
+    end
+    assert(client.boo(serialize(tbl)) > 100)
+  end},
 
-tests.table_deser = function(client)
-  local tbl = {}
-  for i = 1, 100 do
-    tbl[i] = i
-  end
-  assert(client.boo_deser(serialize(tbl)) == 100)
-end
+  {"table_deser", function(client)
+    local tbl = {}
+    for i = 1, 100 do
+      tbl[i] = i
+    end
+    assert(client.boo_deser(serialize(tbl)) == 100)
+  end}
+}
 
 local format_n = function(time, unit)
   return string.format("%.5f", time)  .. unit
@@ -64,35 +66,32 @@ function serialize (o)
   end
 end
 
-print("name", "", "client", "pool", "#", "elapsed time", "time/test", "tests/s")
-for test_name, test in pairs(tests) do
-  for client_name, client_factory in pairs(client_factories) do
-    for _, pool_size in ipairs({1, 3, 10}) do
-      local clients = {}
-      for i = 1, pool_size do
-        clients[i] = client_factory()
-      end
-      times = 0
-      start_time = os.clock()
-      while os.clock() < start_time + 1 do
-        test(clients[(times % pool_size) + 1])
-        times = times + 1
-      end
-      end_time = os.clock()
-      for i = 1, pool_size do
-        clients[i].client:close()
-      end
 
-      elapsed_time = end_time - start_time
-      print(
-        test_name,
-        client_name,
-        pool_size,
-        times,
-        format_n(elapsed_time, " s"),
-        format_n(elapsed_time / times, " s"),
-        format_n(times / elapsed_time, "/s")
-      )
+
+print("name", "", "client", "pool", "#", "elapsed time", "time/test", "tests/s")
+for _, test in pairs(tests) do
+  local test_name, test_function = test[1], test[2]
+  for i, client_data in ipairs(client_factories) do
+    local client_name, client_factory = client_data[1], client_data[2]
+    os.execute("sleep " .. (5 - (socket.gettime() % 5)))
+    local client = client_factory()
+    times = 500
+    start_time = socket.gettime()
+    for i = 1, times do
+      test_function(client)
     end
+    end_time = socket.gettime()
+    client.client:close()
+
+    elapsed_time = (end_time - start_time)
+    print(
+      test_name,
+      client_name,
+      pool_size,
+      times,
+      format_n(elapsed_time, " s"),
+      format_n(elapsed_time / times, " s"),
+      format_n(times / elapsed_time, "/s")
+    )
   end
 end
