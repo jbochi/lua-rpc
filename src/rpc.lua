@@ -312,7 +312,9 @@ rpc.waitIncoming = function()
         handle_new_client(servant)
       else
         servant = client_servants[socket]
-        servant:serve_client(socket)
+        if servant then
+          servant:serve_client(socket)
+        end
       end
     end
   end
