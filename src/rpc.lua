@@ -143,9 +143,6 @@ local proxy_call = function(proxy, method_name)
         client:settimeout(CLIENT_TIMEOUT)
       end
       client:send(method.serialize_call(...))
-      if #method.result_types() == 0 then
-        break
-      end
       local _, err = client:receive(0)
       if err == "closed" then
         connected = false
