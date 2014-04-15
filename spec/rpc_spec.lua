@@ -359,7 +359,7 @@ describe("communication", function()
         servant:serve_client()
         assert.spy(server.accept).called()
         assert.spy(client.receive).called(3)
-        local expected_error = "___ERRORPC: Unknown error: './test.lua:" .. ln .. ": error'\n"
+        local expected_error = "___ERRORPC: Unknown error: './spec/rpc_spec.lua:" .. ln .. ": error'\n"
         assert.spy(client.send).called_with(client, expected_error)
         assert.spy(client.close).called()
       end)
