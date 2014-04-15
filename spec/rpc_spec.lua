@@ -63,44 +63,52 @@ describe("interface", function()
         foo = { resulttype = "void", args = {} }
       }}
       assert.same({}, i.foo.arg_types())
-      assert.same({}, i.foo.result_types())
+      assert.same({"void"}, i.foo.result_types())
     end)
   end)
 end)
 
 describe("serialization", function()
   it("should serialize a string", function()
-    assert.same("oi", rpc.serialize("string", "oi"))
+    assert.same('"oi"', rpc.serialize("string", 'oi'))
+  end)
+
+  it("should escape quotes", function()
+    assert.same('"\\""', rpc.serialize("string", '"'))
   end)
 
   it("should escape new lines", function()
-    assert.same("\\n", rpc.serialize("string", "\n"))
+    assert.same('"\\n"', rpc.serialize("string", "\n"))
   end)
 
   it("should escape slashes", function()
-    assert.same("\\\\n", rpc.serialize("string", "\\n"))
+    assert.same('"\\\\n"', rpc.serialize("string", "\\n"))
   end)
 
   it("should serialize a char", function()
-    assert.same("o", rpc.serialize("char", "o"))
+    assert.same('"o"', rpc.serialize("char", "o"))
   end)
 
   it("should support doubles", function()
     assert.same("3.1415", rpc.serialize("double", 3.1415))
   end)
 
+  it("should serialize nil", function()
+    assert.same("nil", rpc.serialize("double", nil))
+    assert.same("nil", rpc.serialize("string", nil))
+    assert.same("nil", rpc.serialize("char", nil))
+  end)
+
   it("should validate arguments", function()
     assert.has_error(function() rpc.serialize("string", 4) end, "String expected")
-    assert.has_error(function() rpc.serialize("string", nil) end, "String expected")
     assert.has_error(function() rpc.serialize("char", "asdf") end, "Char expected")
     assert.has_error(function() rpc.serialize("char", 4) end, "Char expected")
     assert.has_error(function() rpc.serialize("double", "a") end, "Double expected")
-    assert.has_error(function() rpc.serialize("double", nil) end, "Double expected")
   end)
 
   describe("list serialization", function()
     it("should serialize a list with new line separator", function()
-      assert.same("a\nb\nc\n", rpc.serialize_list({"string", "string", "string"}, {"a", "b", "c"}))
+      assert.same('a\n"b"\n"c"\n', rpc.serialize_list({"method", "string", "string"}, {"a", "b", "c"}))
     end)
 
     it("should validate the number of arguments", function()
@@ -113,8 +121,8 @@ describe("serialization", function()
         "String expected")
     end)
 
-    it("should add missing arguments", function()
-      assert.same("\n\n0\n", rpc.serialize_list({"string", "string", "double"}, {}))
+    it("should convert missing arguments to nil", function()
+      assert.same('"a"\nnil\nnil\n', rpc.serialize_list({"string", "string", "double"}, {"a"}))
     end)
   end)
 end)
@@ -131,6 +139,9 @@ describe("deserialization", function()
   it("should deserialize to original value", function()
     assert.same("abc", rpc.deserialize("string", rpc.serialize("string", "abc")))
     assert.same("a", rpc.deserialize("char", rpc.serialize("char", "a")))
+    assert.same('"', rpc.deserialize("char", rpc.serialize("char", '"')))
+    assert.same(nil, rpc.deserialize("string", rpc.serialize("string", nil)))
+    assert.same('\\"testing\\" "quotes"', rpc.deserialize("string", rpc.serialize("string", '\\"testing\\" "quotes"')))
     assert.same(3.14, rpc.deserialize("double", rpc.serialize("double", 3.14)))
     assert.same("a\\b", rpc.deserialize("string", rpc.serialize("string", "a\\b")))
     assert.same("a\n", rpc.deserialize("string", rpc.serialize("string", "a\n")))
@@ -153,10 +164,6 @@ describe("communication", function()
 
     it("should serialize a call", function()
       assert.same("add\n3\n4\n", add.serialize_call(3, 4))
-    end)
-
-    it("should add missing arguments to a call", function()
-      assert.same("add\n4\n0\n", add.serialize_call(4))
     end)
 
     it("should validate the number of arguments for a call", function()
@@ -253,8 +260,12 @@ describe("communication", function()
       it("should handle void functions", function()
         i.__methods.void = { resulttype = "void",
                              args = {}}
+        client.receive = function()
+          return "nil"
+        end
+        spy.on(client, "receive")
         assert.same(true, p.void() == nil)
-        assert.spy(client.receive).was.not_called()
+        assert.spy(client.receive).was.called()
       end)
     end)
 

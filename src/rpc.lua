@@ -21,9 +21,7 @@ local method = function(name, method_interface)
   end
   m.result_types = function()
     local types = list_types("out")
-    if method_interface.resulttype and method_interface.resulttype ~= "void" then
-      table.insert(types, 1, method_interface.resulttype)
-    end
+    table.insert(types, 1, method_interface.resulttype or "void")
     return types
   end
   m.arg_types = function()
@@ -33,7 +31,7 @@ local method = function(name, method_interface)
     local args = {...}
     local arg_types = m.arg_types()
     table.insert(args, 1, name)
-    table.insert(arg_types, 1, string)
+    table.insert(arg_types, 1, "method")
     return rpc.serialize_list(arg_types, args)
   end
   m.serialize_result = function(...)
@@ -64,6 +62,9 @@ end
 
 -- serialization functions
 rpc.serialize = function(arg_type, arg)
+  if arg == nil or arg_type == "void" then
+    return "nil"
+  end
   if arg_type == "string" and type(arg) ~= "string" then
     error("String expected")
   elseif arg_type == "char" and (type(arg) ~= "string" or #arg ~= 1) then
@@ -71,10 +72,24 @@ rpc.serialize = function(arg_type, arg)
   elseif arg_type == "double" and (type(arg) ~= "number") then
     error("Double expected")
   end
-  return (string.gsub((string.gsub(arg, "\\", "\\\\")), "\n", "\\n"))
+
+  if arg_type == "string" or arg_type == "char" then
+    local replacements = {{"\\", "\\\\"},
+                          {'"', '\\"'},
+                          {"\n", "\\n"}}
+    local s = arg
+    for i, replacement in pairs(replacements) do
+      s = (string.gsub(s, replacement[1], replacement[2]))
+    end
+    return '"' .. s .. '"'
+  end
+  return tostring(arg)
 end
 
 rpc.deserialize = function(arg_type, arg)
+  if arg == "nil" then
+    return nil
+  end
   if arg_type == "double" then
     local n = tonumber(arg)
     if n == nil then
@@ -82,11 +97,15 @@ rpc.deserialize = function(arg_type, arg)
     end
     return n
   else
-    local s = (string.gsub(
-              string.gsub(
-                string.gsub(arg, "^\\n", "\n"),
-              "([^\\])\\n", "%1\n"),
-            "\\\\", "\\"))
+    local replacements = {{'^"(.*)"$', "%1"},
+                          {'\\"', '"'},
+                          {"^\\n", "\n"},
+                          {"([^\\])\\n", "%1\n"},
+                          {"\\\\", "\\"}}
+    local s = arg
+    for i, replacement in pairs(replacements) do
+      s = (string.gsub(s, replacement[1], replacement[2]))
+    end
     if arg_type == "char" and #s > 1 then
       error("Char expected")
     end
@@ -101,14 +120,6 @@ rpc.serialize_list = function(arg_types, args)
   local lines = {}
   for i, t in ipairs(arg_types) do
     local arg = args[i]
-    -- add missing arguments
-    if arg == nil then
-      if t == "double" then
-        arg = 0
-      else
-        arg = ""
-      end
-    end
     lines[#lines + 1] = rpc.serialize(t, arg)
   end
   lines[#lines + 1] = ""
