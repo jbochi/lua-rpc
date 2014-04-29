@@ -58,6 +58,16 @@ describe("interface", function()
       assert.same({"double", "string"}, i.foo.result_types())
     end)
 
+    it("should support in/out with void result", function()
+      local i = interface { methods = {
+        foo = { resulttype = "void",
+                args = {{direction = "inout",
+                          type = "double"}}}
+      }}
+      assert.same({"double"}, i.foo.arg_types())
+      assert.same({"void", "double"}, i.foo.result_types())
+    end)
+
     it("should support void", function()
       local i = interface { methods = {
         foo = { resulttype = "void", args = {} }
@@ -376,4 +386,23 @@ describe("communication", function()
       end)
     end)
   end)
+
+  describe("a method with void result type", function ()
+    before_each(function()
+      i = interface { methods = {
+        boo = { resulttype = "void",
+                args = {{direction="inout", type="double"}}}
+      }}
+      boo = i.boo
+    end)
+
+    it("should serialize a call", function()
+      assert.same("boo\n3\n", boo.serialize_call(3))
+    end)
+
+    it("should serialize returned values", function()
+      assert.same("nil\n7\n", boo.serialize_result(7))
+    end)
+  end)
+
 end)

@@ -117,6 +117,9 @@ rpc.serialize_list = function(arg_types, args)
   if #args > #arg_types then
     error("Wrong number of arguments (" .. #args .. " instead of " .. #arg_types .. ")")
   end
+  if arg_types[1] == "void" then
+    table.insert(args, 1, nil)
+  end
   local lines = {}
   for i, t in ipairs(arg_types) do
     local arg = args[i]
