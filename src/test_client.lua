@@ -21,10 +21,10 @@ local r, s = p1.foo(3, 5)
 print("p1.foo(3, 5) = (" .. r .. ", '" .. s .."')")
 
 local t = p2.boo(10)
-print("p2.boo(10) = " ..  t)
+print("p2.boo(10) = " ..  tostring(t))
 
 local r, s = p2.foo(3, 5)
 print("p2.foo(3, 5) = (" .. r .. ", '" .. s .."')")
 
 local t = p1.boo(10)
-print("p1.boo(10) = " ..  t)
+print("p1.boo(10) = " ..  tostring(t))
